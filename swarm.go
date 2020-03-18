@@ -50,7 +50,8 @@ func NewPSOParam() *PSOParam {
 			VUpper: 5,
 			VLower: -5,
 		},
-		NProc: 1,
+		NProc:    1,
+		InitFunc: DefaultInitParticle,
 	}
 }
 

@@ -16,7 +16,6 @@ func TestSolver_Run(t *testing.T) {
 	psoParam := NewPSOParam()
 	psoParam.Dim = 10
 	psoParam.PopSize = 10
-	psoParam.InitFunc = DefaultInitParticle
 	psoParam.Target = SumSquare
 	psoParam.NProc = 4
 
