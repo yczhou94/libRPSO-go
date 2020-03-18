@@ -73,3 +73,17 @@ func (p *particle) updateVelocity(idx int, pBest []*Solution, gBest *Solution, p
 		p.velocity.learn(pBest[rIdx].position, p.solution.position, param.C3)
 	}
 }
+
+func DefaultInitParticle(bound *Bound, dim int) (*Solution, *Velocity) {
+	s := NewSolution(dim)
+	v := NewVelocity(dim)
+	for i := 0; i < dim; i++ {
+		s.position[i] = rangeRand(bound.XUpper, bound.XLower)
+		v.v[i] = rangeRand(bound.VUpper, bound.VLower)
+	}
+	return s, v
+}
+
+func rangeRand(upper, lower float64) float64 {
+	return (upper-lower)*rand.Float64() + lower
+}
