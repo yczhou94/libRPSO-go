@@ -5,6 +5,9 @@ import (
 )
 
 func SumSquare(x []float64, args ...interface{}) ([]float64, float64, error) {
+	if args == nil {
+
+	}
 	var sum float64
 	for i := 0; i < len(x); i++ {
 		sum += x[i] * x[i]
