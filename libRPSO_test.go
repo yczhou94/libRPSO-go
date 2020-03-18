@@ -28,27 +28,13 @@ func SumSquare(x []float64, args ...interface{}) ([]float64, float64, error) {
 }
 
 func TestSolver_Run(t *testing.T) {
-	psoParam := &PSOParam{
-		W:  0.723,
-		C1: 1.4454,
-		C2: 1.4454,
-		C3: 0.72,
-		Pr: 0.1,
-		Pm: 0.01,
-		T:  100,
-		Bound: &Bound{
-			XUpper: 10,
-			XLower: -10,
-			VUpper: 5,
-			VLower: -5,
-		},
-		Dim:      10,
-		NProc:    1,
-		PopSize:  10,
-		InitFunc: initParticle,
-		Target:   SumSquare,
-		Args:     nil,
-	}
+	psoParam := NewPSOParam()
+	psoParam.Dim = 10
+	psoParam.PopSize = 10
+	psoParam.InitFunc = initParticle
+	psoParam.Target = SumSquare
+	psoParam.NProc = 4
+
 	conf := &SolverConf{
 		MaxStep:     100,
 		NTerm:       100,

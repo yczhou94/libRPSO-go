@@ -1,8 +1,10 @@
 package libRPSO
 
 import (
+	"log"
 	"math"
 	"math/rand"
+	"sync"
 )
 
 type swarm struct {
@@ -13,6 +15,7 @@ type swarm struct {
 	pBestMem  []*Solution
 	gBestMem  *Solution
 	param     *PSOParam
+	wg        sync.WaitGroup
 }
 
 type PSOParam struct {
@@ -33,10 +36,25 @@ type PSOParam struct {
 }
 
 func NewPSOParam() *PSOParam {
-	return &PSOParam{}
+	return &PSOParam{
+		W:  0.723,
+		C1: 1.4454,
+		C2: 1.4454,
+		C3: 0.72,
+		Pr: 0.1,
+		Pm: 0.01,
+		T:  100,
+		Bound: &Bound{
+			XUpper: 10,
+			XLower: -10,
+			VUpper: 5,
+			VLower: -5,
+		},
+		NProc: 1,
+	}
 }
 
-func NewSwarm(param *PSOParam) (*swarm, error) {
+func newSwarm(param *PSOParam) (*swarm, error) {
 	s := &swarm{
 		popSize:   param.PopSize,
 		particles: make([]*particle, param.PopSize),
@@ -65,28 +83,42 @@ func NewSwarm(param *PSOParam) (*swarm, error) {
 }
 
 func (s *swarm) step() error {
+	var err error
+	s.wg.Add(s.param.PopSize)
+	queue := make(chan struct{}, s.param.NProc)
 	for idx, p := range s.particles {
-		err := p.step(idx, s.pBest, s.gBest, s.param)
-		if err != nil {
-			return err
-		}
-		if p.solution.evalValue < s.pBest[idx].evalValue {
-			s.pBest[idx].copy(p.solution)
-		} else {
-			pAcc := metropolis(s.pBest[idx].evalValue, p.solution.evalValue, s.param.T)
-			if pAcc < rand.Float64() {
+		queue <- struct{}{}
+		worker := func(idx int) {
+			defer func() {
+				<-queue
+				s.wg.Done()
+			}()
+			log.Printf("particle %d running \n", idx)
+			e := p.step(idx, s.pBest, s.gBest, s.param)
+			if e != nil {
+				err = e
+				return
+			}
+			if p.solution.evalValue < s.pBest[idx].evalValue {
 				s.pBest[idx].copy(p.solution)
+			} else {
+				pAcc := metropolis(s.pBest[idx].evalValue, p.solution.evalValue, s.param.T)
+				if pAcc < rand.Float64() {
+					s.pBest[idx].copy(p.solution)
+				}
+			}
+
+			if p.solution.evalValue < s.pBestMem[idx].evalValue {
+				s.pBestMem[idx].copy(p.solution)
 			}
 		}
-
-		if p.solution.evalValue < s.pBestMem[idx].evalValue {
-			s.pBestMem[idx].copy(p.solution)
-		}
+		go worker(idx)
 	}
 
+	s.wg.Wait()
 	s.updateBest()
 
-	return nil
+	return err
 }
 
 func (s *swarm) updateBest() {

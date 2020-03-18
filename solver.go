@@ -19,7 +19,7 @@ func NewSolver(psoParam *PSOParam, conf *SolverConf) (*Solver, error) {
 	solver := &Solver{
 		conf: conf,
 	}
-	solver.s, err = NewSwarm(psoParam)
+	solver.s, err = newSwarm(psoParam)
 
 	return solver, err
 }
