@@ -17,10 +17,10 @@ func SumSquare(x []float64, args ...interface{}) ([]float64, float64, error) {
 }
 
 func TestSolver_Run(t *testing.T) {
-	psoParam := solver.NewPSOParam(10, 10, SumSquare)
+	psoParam := solver.NewPSOParam(50, 50, SumSquare)
 	psoParam.SetNProc(4)
 
-	conf := solver.NewSolverConf(100)
+	conf := solver.NewSolverConf(10000)
 
 	s, err := solver.NewSolver(psoParam, conf)
 	if err != nil {

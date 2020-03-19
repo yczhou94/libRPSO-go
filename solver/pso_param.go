@@ -1,20 +1,22 @@
 package solver
 
 type PSOParam struct {
-	w          float64
-	c1         float64
-	c2         float64
-	c3         float64
-	pr         float64
-	pm         float64
-	t          float64
-	bound      *Bound
-	dim        int
-	nProc      int
-	popSize    int
-	initFunc   InitParticleFunc
-	targetFunc TargetFunc
-	args       interface{}
+	w             float64
+	c1            float64
+	c2            float64
+	c3            float64
+	pr            float64
+	pm            float64
+	t             float64
+	bound         *Bound
+	dim           int
+	nProc         int
+	popSize       int
+	maxStep       int
+	simAnnealFlag bool
+	initFunc      InitParticleFunc
+	targetFunc    TargetFunc
+	args          interface{}
 }
 
 func (p *PSOParam) SetW(w float64) {
@@ -69,13 +71,17 @@ func (p *PSOParam) SetTargetFuncArgs(args interface{}) {
 	p.args = args
 }
 
+func (p *PSOParam) SetSimAnnealFlag(flag bool) {
+	p.simAnnealFlag = flag
+}
+
 func NewPSOParam(popSize int, dim int, targetFunc TargetFunc) *PSOParam {
 	return &PSOParam{
 		w:  0.723,
 		c1: 1.4454,
 		c2: 1.4454,
 		c3: 0.72,
-		pr: 0.1,
+		pr: 0.01,
 		pm: 0.01,
 		t:  100,
 		bound: &Bound{
@@ -84,11 +90,12 @@ func NewPSOParam(popSize int, dim int, targetFunc TargetFunc) *PSOParam {
 			VUpper: 5,
 			VLower: -5,
 		},
-		dim:        dim,
-		nProc:      1,
-		popSize:    popSize,
-		initFunc:   DefaultInitParticle,
-		targetFunc: targetFunc,
-		args:       nil,
+		dim:           dim,
+		nProc:         1,
+		popSize:       popSize,
+		simAnnealFlag: true,
+		initFunc:      DefaultInitParticle,
+		targetFunc:    targetFunc,
+		args:          nil,
 	}
 }

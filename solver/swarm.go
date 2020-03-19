@@ -1,7 +1,6 @@
 package solver
 
 import (
-	"log"
 	"math"
 	"math/rand"
 	"sync"
@@ -46,7 +45,7 @@ func newSwarm(param *PSOParam) (*swarm, error) {
 	return s, nil
 }
 
-func (s *swarm) step() error {
+func (s *swarm) step(step int) error {
 	var err error
 	s.wg.Add(s.param.popSize)
 	queue := make(chan struct{}, s.param.nProc)
@@ -57,7 +56,6 @@ func (s *swarm) step() error {
 				<-queue
 				s.wg.Done()
 			}()
-			log.Printf("particle %d running \n", idx)
 			e := p.step(idx, s.pBest, s.gBest, s.param)
 			if e != nil {
 				err = e
@@ -67,12 +65,12 @@ func (s *swarm) step() error {
 				s.pBest[idx].copy(p.solution)
 			} else {
 				pAcc := metropolis(s.pBest[idx].evalValue, p.solution.evalValue, s.param.t)
-				if pAcc < rand.Float64() {
+				if rand.Float64() < pAcc {
 					s.pBest[idx].copy(p.solution)
 				}
 			}
 
-			if p.solution.evalValue < s.pBestMem[idx].evalValue {
+			if p.solution.evalValue < s.pBestMem[idx].evalValue && s.param.simAnnealFlag {
 				s.pBestMem[idx].copy(p.solution)
 			}
 		}
@@ -81,6 +79,7 @@ func (s *swarm) step() error {
 
 	s.wg.Wait()
 	s.updateBest()
+	s.simAnneal(step)
 
 	return err
 }
@@ -98,6 +97,10 @@ func (s *swarm) updateBest() {
 
 func (s *swarm) getBestSolution() *Solution {
 	return s.gBestMem
+}
+
+func (s *swarm) simAnneal(step int) {
+	s.param.t /= 1 + math.Log(float64(step+1+1))
 }
 
 func metropolis(eOld, eNew, T float64) float64 {
