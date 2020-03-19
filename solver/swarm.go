@@ -8,7 +8,7 @@ import (
 
 type swarm struct {
 	popSize   int
-	particles []*particle
+	solutions []*Solution
 	pBest     []*Solution
 	gBest     *Solution
 	pBestMem  []*Solution
@@ -17,26 +17,54 @@ type swarm struct {
 	wg        sync.WaitGroup
 }
 
-func newSwarm(param *PSOParam) (*swarm, error) {
+func newSwarm(param *PSOParam, solutions []*Solution) (*swarm, error) {
+	var err error
 	s := &swarm{
 		popSize:   param.popSize,
-		particles: make([]*particle, param.popSize),
+		solutions: make([]*Solution, param.popSize),
 		pBest:     make([]*Solution, param.popSize),
-		gBest:     NewSolution(param.dim),
 		pBestMem:  make([]*Solution, param.popSize),
-		gBestMem:  NewSolution(param.dim),
 		param:     param,
 	}
 
+	s.gBest, err = NewSolution(param)
+	if err != nil {
+		return nil, err
+	}
+	s.gBestMem, err = NewSolution(param)
+	if err != nil {
+		return nil, err
+	}
+
+	if solutions == nil {
+		solutions = make([]*Solution, param.popSize)
+		for i := 0; i < param.popSize; i++ {
+			solutions[i], err = NewSolution(param)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		for i := 0; i < param.popSize; i++ {
+			err = solutions[i].setUp(param)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	s.solutions = solutions
+
 	for i := 0; i < param.popSize; i++ {
-		p, err := newParticle(s.param)
+		s.pBest[i], err = NewSolution(param)
 		if err != nil {
 			return nil, err
 		}
-		s.particles[i] = p
-		s.pBest[i] = NewSolution(param.dim)
-		s.pBestMem[i] = NewSolution(param.dim)
-		s.pBest[i].copy(p.solution)
+		s.pBestMem[i], err = NewSolution(param)
+		if err != nil {
+			return nil, err
+		}
+		s.pBest[i].copy(s.solutions[i])
 	}
 
 	copy(s.pBestMem, s.pBest)
@@ -45,33 +73,34 @@ func newSwarm(param *PSOParam) (*swarm, error) {
 	return s, nil
 }
 
-func (s *swarm) step(step int) error {
+func (s *swarm) step() error {
 	var err error
 	s.wg.Add(s.param.popSize)
 	queue := make(chan struct{}, s.param.nProc)
-	for idx, p := range s.particles {
+	for idx, _ := range s.solutions {
 		queue <- struct{}{}
 		worker := func(idx int) {
 			defer func() {
 				<-queue
 				s.wg.Done()
 			}()
-			e := p.step(idx, s.pBest, s.gBest, s.param)
+			solution := s.solutions[idx]
+			e := solution.step(idx, s.pBest, s.gBest, s.param)
 			if e != nil {
 				err = e
 				return
 			}
-			if p.solution.evalValue < s.pBest[idx].evalValue {
-				s.pBest[idx].copy(p.solution)
-			} else {
-				pAcc := metropolis(s.pBest[idx].evalValue, p.solution.evalValue, s.param.t)
+			if solution.evalValue < s.pBest[idx].evalValue {
+				s.pBest[idx].copy(solution)
+			} else if s.param.simAnnealFlag {
+				pAcc := metropolis(s.pBest[idx].evalValue, solution.evalValue, s.param.t)
 				if rand.Float64() < pAcc {
-					s.pBest[idx].copy(p.solution)
+					s.pBest[idx].copy(solution)
 				}
 			}
 
-			if p.solution.evalValue < s.pBestMem[idx].evalValue && s.param.simAnnealFlag {
-				s.pBestMem[idx].copy(p.solution)
+			if solution.evalValue < s.pBestMem[idx].evalValue {
+				s.pBestMem[idx].copy(solution)
 			}
 		}
 		go worker(idx)
@@ -79,7 +108,7 @@ func (s *swarm) step(step int) error {
 
 	s.wg.Wait()
 	s.updateBest()
-	s.simAnneal(step)
+	s.simAnneal()
 
 	return err
 }
@@ -99,8 +128,8 @@ func (s *swarm) getBestSolution() *Solution {
 	return s.gBestMem
 }
 
-func (s *swarm) simAnneal(step int) {
-	s.param.t /= 1 + math.Log(float64(step+1+1))
+func (s *swarm) simAnneal() {
+	s.param.t *= 0.999
 }
 
 func metropolis(eOld, eNew, T float64) float64 {

@@ -32,13 +32,13 @@ func NewSolverConf(maxStep int) *Conf {
 	}
 }
 
-func NewSolver(psoParam *PSOParam, conf *Conf) (*Solver, error) {
+func NewSolver(psoParam *PSOParam, conf *Conf, solutions []*Solution) (*Solver, error) {
 	var err error
 	solver := &Solver{
 		conf: conf,
 	}
 	psoParam.maxStep = conf.MaxStep
-	solver.swarm, err = newSwarm(psoParam)
+	solver.swarm, err = newSwarm(psoParam, solutions)
 	rand.Seed(conf.Seed)
 
 	return solver, err
@@ -51,7 +51,7 @@ func (s *Solver) Run() error {
 	)
 	for step = 0; step < s.conf.MaxStep; step++ {
 		old := s.swarm.gBestMem.evalValue
-		err := s.swarm.step(step)
+		err := s.swarm.step()
 		if err != nil {
 			return err
 		}

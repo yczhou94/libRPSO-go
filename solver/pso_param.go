@@ -14,7 +14,7 @@ type PSOParam struct {
 	popSize       int
 	maxStep       int
 	simAnnealFlag bool
-	initFunc      InitParticleFunc
+	initFunc      InitSolutionFunc
 	targetFunc    TargetFunc
 	args          interface{}
 }
@@ -59,7 +59,7 @@ func (p *PSOParam) SetNProc(nProc int) {
 	p.nProc = nProc
 }
 
-func (p *PSOParam) SetInitFunc(initFunc InitParticleFunc) {
+func (p *PSOParam) SetInitFunc(initFunc InitSolutionFunc) {
 	p.initFunc = initFunc
 }
 
@@ -73,6 +73,10 @@ func (p *PSOParam) SetTargetFuncArgs(args interface{}) {
 
 func (p *PSOParam) SetSimAnnealFlag(flag bool) {
 	p.simAnnealFlag = flag
+}
+
+func (p *PSOParam) GetBound() *Bound {
+	return p.bound
 }
 
 func NewPSOParam(popSize int, dim int, targetFunc TargetFunc) *PSOParam {
@@ -94,7 +98,7 @@ func NewPSOParam(popSize int, dim int, targetFunc TargetFunc) *PSOParam {
 		nProc:         1,
 		popSize:       popSize,
 		simAnnealFlag: true,
-		initFunc:      DefaultInitParticle,
+		initFunc:      DefaultInitSolution,
 		targetFunc:    targetFunc,
 		args:          nil,
 	}
