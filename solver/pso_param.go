@@ -59,6 +59,14 @@ func (p *PSOParam) SetNProc(nProc int) {
 	p.nProc = nProc
 }
 
+func (p *PSOParam) SetPopSize(popSize int) {
+	p.popSize = popSize
+}
+
+func (p *PSOParam) SetMaxStep(maxStep int) {
+	p.maxStep = maxStep
+}
+
 func (p *PSOParam) SetInitFunc(initFunc InitSolutionFunc) {
 	p.initFunc = initFunc
 }

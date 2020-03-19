@@ -17,6 +17,7 @@ type Solver struct {
 type Conf struct {
 	MaxStep     int
 	NTerm       int
+	NConfusion  int
 	PrintEvery  int
 	Convergence float64
 	Seed        int64
@@ -26,6 +27,7 @@ func NewSolverConf(maxStep int) *Conf {
 	return &Conf{
 		MaxStep:     maxStep,
 		NTerm:       maxStep,
+		NConfusion:  maxStep / 10,
 		PrintEvery:  1,
 		Convergence: 1e-5,
 		Seed:        time.Now().Unix(),
@@ -62,6 +64,9 @@ func (s *Solver) Run() error {
 		}
 		if tCount == s.conf.NTerm {
 			break
+		}
+		if tCount == s.conf.NConfusion && s.conf.NConfusion > 0 {
+			s.swarm.confusion()
 		}
 	}
 	s.finish(step)

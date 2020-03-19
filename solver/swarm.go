@@ -124,6 +124,12 @@ func (s *swarm) updateBest() {
 	}
 }
 
+func (s *swarm) confusion() {
+	for i := range s.gBest.position {
+		s.gBest.position[i] *= 1 + 0.5*rand.NormFloat64()
+	}
+}
+
 func (s *swarm) getBestSolution() *Solution {
 	return s.gBestMem
 }

@@ -34,14 +34,15 @@ func Rosenbrock(x []float64, args ...interface{}) ([]float64, float64, error) {
 func TestSolver_Run(t *testing.T) {
 	popSize := 50
 	dim := 50
+	maxStep := 10000
 	psoParam := solver.NewPSOParam(popSize, dim, Rosenbrock)
 	psoParam.SetNProc(8)
 
 	times := 10
-	eval := make([]float64, 5)
+	eval := make([]float64, 6)
 
 	for i := 0; i < times; i++ {
-		conf := solver.NewSolverConf(10000)
+		conf := solver.NewSolverConf(maxStep)
 		conf.Seed = time.Now().Unix()
 
 		p := make([]*solver.Solution, popSize)
@@ -56,6 +57,7 @@ func TestSolver_Run(t *testing.T) {
 		psoParam.SetSimAnnealFlag(false)
 		psoParam.SetPr(0)
 		psoParam.SetPm(0)
+		conf.NConfusion = 0
 		eval[0] += runSolver(psoParam, conf, p)
 
 		copy(p, pMem)
@@ -66,7 +68,7 @@ func TestSolver_Run(t *testing.T) {
 		copy(p, pMem)
 		log.Println("random learning")
 		psoParam.SetSimAnnealFlag(false)
-		psoParam.SetPr(0.01)
+		psoParam.SetPr(0.1)
 		eval[2] += runSolver(psoParam, conf, p)
 
 		copy(p, pMem)
@@ -76,10 +78,17 @@ func TestSolver_Run(t *testing.T) {
 		eval[3] += runSolver(psoParam, conf, p)
 
 		copy(p, pMem)
-		log.Println("revised")
-		psoParam.SetPr(0.01)
-		psoParam.SetSimAnnealFlag(true)
+		log.Println("confusion")
+		conf.NConfusion = int(math.Sqrt(float64(maxStep)))
+		psoParam.SetPm(0)
 		eval[4] += runSolver(psoParam, conf, p)
+
+		copy(p, pMem)
+		log.Println("revised")
+		psoParam.SetPr(0.1)
+		psoParam.SetPm(0.01)
+		psoParam.SetSimAnnealFlag(true)
+		eval[5] += runSolver(psoParam, conf, p)
 	}
 
 	fmt.Printf("%+v\n", eval)
