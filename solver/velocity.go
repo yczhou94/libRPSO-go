@@ -1,4 +1,4 @@
-package libRPSO
+package solver
 
 import (
 	"libRPSO/vector"

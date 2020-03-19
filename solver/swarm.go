@@ -1,4 +1,4 @@
-package libRPSO
+package solver
 
 import (
 	"log"
@@ -18,62 +18,25 @@ type swarm struct {
 	wg        sync.WaitGroup
 }
 
-type PSOParam struct {
-	W        float64
-	C1       float64
-	C2       float64
-	C3       float64
-	Pr       float64
-	Pm       float64
-	T        float64
-	Bound    *Bound
-	Dim      int
-	NProc    int
-	PopSize  int
-	InitFunc InitParticleFunc
-	Target   TargetFunc
-	Args     interface{}
-}
-
-func NewPSOParam() *PSOParam {
-	return &PSOParam{
-		W:  0.723,
-		C1: 1.4454,
-		C2: 1.4454,
-		C3: 0.72,
-		Pr: 0.1,
-		Pm: 0.01,
-		T:  100,
-		Bound: &Bound{
-			XUpper: 10,
-			XLower: -10,
-			VUpper: 5,
-			VLower: -5,
-		},
-		NProc:    1,
-		InitFunc: DefaultInitParticle,
-	}
-}
-
 func newSwarm(param *PSOParam) (*swarm, error) {
 	s := &swarm{
-		popSize:   param.PopSize,
-		particles: make([]*particle, param.PopSize),
-		pBest:     make([]*Solution, param.PopSize),
-		gBest:     NewSolution(param.Dim),
-		pBestMem:  make([]*Solution, param.PopSize),
-		gBestMem:  NewSolution(param.Dim),
+		popSize:   param.popSize,
+		particles: make([]*particle, param.popSize),
+		pBest:     make([]*Solution, param.popSize),
+		gBest:     NewSolution(param.dim),
+		pBestMem:  make([]*Solution, param.popSize),
+		gBestMem:  NewSolution(param.dim),
 		param:     param,
 	}
 
-	for i := 0; i < param.PopSize; i++ {
-		p, err := NewParticle(s.param)
+	for i := 0; i < param.popSize; i++ {
+		p, err := newParticle(s.param)
 		if err != nil {
 			return nil, err
 		}
 		s.particles[i] = p
-		s.pBest[i] = NewSolution(param.Dim)
-		s.pBestMem[i] = NewSolution(param.Dim)
+		s.pBest[i] = NewSolution(param.dim)
+		s.pBestMem[i] = NewSolution(param.dim)
 		s.pBest[i].copy(p.solution)
 	}
 
@@ -85,8 +48,8 @@ func newSwarm(param *PSOParam) (*swarm, error) {
 
 func (s *swarm) step() error {
 	var err error
-	s.wg.Add(s.param.PopSize)
-	queue := make(chan struct{}, s.param.NProc)
+	s.wg.Add(s.param.popSize)
+	queue := make(chan struct{}, s.param.nProc)
 	for idx, p := range s.particles {
 		queue <- struct{}{}
 		worker := func(idx int) {
@@ -103,7 +66,7 @@ func (s *swarm) step() error {
 			if p.solution.evalValue < s.pBest[idx].evalValue {
 				s.pBest[idx].copy(p.solution)
 			} else {
-				pAcc := metropolis(s.pBest[idx].evalValue, p.solution.evalValue, s.param.T)
+				pAcc := metropolis(s.pBest[idx].evalValue, p.solution.evalValue, s.param.t)
 				if pAcc < rand.Float64() {
 					s.pBest[idx].copy(p.solution)
 				}

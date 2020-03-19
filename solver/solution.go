@@ -1,4 +1,4 @@
-package libRPSO
+package solver
 
 type Solution struct {
 	position  []float64

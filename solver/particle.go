@@ -1,4 +1,4 @@
-package libRPSO
+package solver
 
 import (
 	"libRPSO/vector"
@@ -19,15 +19,15 @@ type particle struct {
 
 type InitParticleFunc func(bound *Bound, dim int) (*Solution, *Velocity)
 
-func NewParticle(param *PSOParam) (*particle, error) {
+func newParticle(param *PSOParam) (*particle, error) {
 	if param == nil {
 		panic("the param of particle can not be nil")
 	}
 	p := &particle{}
-	p.init(param.Dim)
-	s, v := param.InitFunc(param.Bound, param.Dim)
+	p.init(param.dim)
+	s, v := param.initFunc(param.bound, param.dim)
 	p.velocity = v
-	x, e, err := param.Target(s.position, param.Args)
+	x, e, err := param.targetFunc(s.position, param.args)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +45,11 @@ func (p *particle) step(idx int, pBest []*Solution, gBest *Solution, param *PSOP
 	p.updateVelocity(idx, pBest, gBest, param)
 
 	pm := rand.Float64()
-	if pm < param.Pm {
-		p.solution, _ = param.InitFunc(param.Bound, param.Dim)
+	if pm < param.pm {
+		p.solution, _ = param.initFunc(param.bound, param.dim)
 	}
 
-	x, e, err := param.Target(p.solution.position, param.Args)
+	x, e, err := param.targetFunc(p.solution.position, param.args)
 	if err != nil {
 		return err
 	}
@@ -60,17 +60,17 @@ func (p *particle) step(idx int, pBest []*Solution, gBest *Solution, param *PSOP
 
 func (p *particle) updateVelocity(idx int, pBest []*Solution, gBest *Solution, param *PSOParam) {
 	// v = w*v
-	p.velocity.v = vector.Scale(p.velocity.v, param.W)
+	p.velocity.v = vector.Scale(p.velocity.v, param.w)
 	// v += c1*r1*(pBest[i] - pos)
-	p.velocity.learn(pBest[idx].position, p.solution.position, param.C1)
+	p.velocity.learn(pBest[idx].position, p.solution.position, param.c1)
 	// v += c2*r2*(gBest - pos)
-	p.velocity.learn(gBest.position, p.solution.position, param.C2)
+	p.velocity.learn(gBest.position, p.solution.position, param.c2)
 
 	// v += c3*r3*(pBest[r] - pos)
 	pr := rand.Float64()
-	if pr < param.Pr {
+	if pr < param.pr {
 		rIdx := rand.Intn(len(pBest))
-		p.velocity.learn(pBest[rIdx].position, p.solution.position, param.C3)
+		p.velocity.learn(pBest[rIdx].position, p.solution.position, param.c3)
 	}
 }
 

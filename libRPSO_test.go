@@ -1,6 +1,7 @@
 package libRPSO
 
 import (
+	"libRPSO/solver"
 	"testing"
 )
 
@@ -16,23 +17,16 @@ func SumSquare(x []float64, args ...interface{}) ([]float64, float64, error) {
 }
 
 func TestSolver_Run(t *testing.T) {
-	psoParam := NewPSOParam()
-	psoParam.Dim = 10
-	psoParam.PopSize = 10
-	psoParam.Target = SumSquare
-	psoParam.NProc = 4
+	psoParam := solver.NewPSOParam(10, 10, SumSquare)
+	psoParam.SetNProc(4)
 
-	conf := &SolverConf{
-		MaxStep:     100,
-		NTerm:       100,
-		PrintEvery:  1,
-		Convergence: 0.01,
-	}
-	solver, err := NewSolver(psoParam, conf)
+	conf := solver.NewSolverConf(100)
+
+	s, err := solver.NewSolver(psoParam, conf)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = solver.Run()
+	err = s.Run()
 	if err != nil {
 		t.Fatal(err)
 	}
