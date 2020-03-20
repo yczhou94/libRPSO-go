@@ -64,7 +64,7 @@ func newSwarm(param *PSOParam, solutions []*Solution) (*swarm, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.pBest[i].copy(s.solutions[i])
+		s.pBest[i].Copy(s.solutions[i])
 	}
 
 	copy(s.pBestMem, s.pBest)
@@ -91,16 +91,16 @@ func (s *swarm) step() error {
 				return
 			}
 			if solution.evalValue < s.pBest[idx].evalValue {
-				s.pBest[idx].copy(solution)
+				s.pBest[idx].Copy(solution)
 			} else if s.param.simAnnealFlag {
 				pAcc := metropolis(s.pBest[idx].evalValue, solution.evalValue, s.param.t)
 				if rand.Float64() < pAcc {
-					s.pBest[idx].copy(solution)
+					s.pBest[idx].Copy(solution)
 				}
 			}
 
 			if solution.evalValue < s.pBestMem[idx].evalValue {
-				s.pBestMem[idx].copy(solution)
+				s.pBestMem[idx].Copy(solution)
 			}
 		}
 		go worker(idx)
@@ -120,7 +120,7 @@ func (s *swarm) updateBest() {
 		}
 	}
 	if s.gBest.evalValue < s.gBestMem.evalValue {
-		s.gBestMem.copy(s.gBest)
+		s.gBestMem.Copy(s.gBest)
 	}
 }
 

@@ -19,6 +19,12 @@ func DotProd(xs, ys []float64) (sum float64) {
 	return sum
 }
 
+func DocInPlace(xs, ys []float64) {
+	for idx, x := range xs {
+		xs[idx] = x * ys[idx]
+	}
+}
+
 func Add(xs, ys []float64, alpha, beta float64) []float64 {
 	CheckEqualLen(xs, ys)
 	result := make([]float64, len(xs), len(xs))

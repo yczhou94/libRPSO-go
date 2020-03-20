@@ -42,7 +42,7 @@ func (s *Solution) update(x []float64, e float64) {
 	s.evalValue = e
 }
 
-func (s *Solution) copy(src *Solution) {
+func (s *Solution) Copy(src *Solution) {
 	copy(s.position, src.position)
 	s.evalValue = src.evalValue
 }
